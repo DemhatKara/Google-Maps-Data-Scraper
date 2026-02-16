@@ -1,0 +1,2 @@
+time=2026-02-17T00:27:38.663+03:00 level=INFO msg="Logger initialized" path=webdata/logs/scraper_2026-02-17.log
+time=2026-02-17T00:27:38.663+03:00 level=INFO msg="Starting Google Maps Scraper" version=v1.0

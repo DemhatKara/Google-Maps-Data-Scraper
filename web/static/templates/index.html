@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps Scraper</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.6/htmx.min.js"></script>
+</head>
+
+<body>
+    <script>
+        // Apply saved theme immediately to prevent flash
+        (function () {
+            var saved = localStorage.getItem('theme');
+            if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+    <div class="app-container">
+        <header>
+            <h1>Google Maps Scraper</h1>
+            <nav>
+                <a href="/api/docs" target="_blank" rel="noopener noreferrer">API Documentation</a>
+                <button class="theme-toggle" id="theme-toggle" type="button" title="Toggle Theme"
+                    onclick="toggleTheme()">🌙</button>
+            </nav>
+
+        </header>
+        <main>
+            <div class="sidebar" id="sidebar">
+                <div class="resize-handle" id="resize-handle"></div>
+                <div id="error-container" class="error-message"></div>
+                <form hx-post="/scrape" hx-target="#job-table tbody" hx-swap="beforeend" hx-indicator="#spinner"
+                    hx-on::before-request="document.getElementById('error-container').innerHTML = ''"
+                    hx-on::after-request="if(!event.detail.successful) document.getElementById('error-container').innerHTML = event.detail.xhr.responseText">
+
+                    <fieldset>
+                        <legend>Task Details</legend>
+                        <div class="form-group">
+                            <label for="name">Task Name:</label>
+                            <input type="text" id="name" name="name" value="{{.Name}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="keywords">Keywords:</label>
+                            <textarea id="keywords" name="keywords" rows="10">{{ .KeywordsString }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="lang">Language:</label>
+                            <select id="lang" name="lang">
+                                <option value="en" {{if eq .Language "en"}}selected{{end}}>English</option>
+                                <option value="tr" {{if eq .Language "tr"}}selected{{end}}>Türkçe</option>
+                                <option value="de" {{if eq .Language "de"}}selected{{end}}>Deutsch</option>
+                                <option value="fr" {{if eq .Language "fr"}}selected{{end}}>Français</option>
+                                <option value="es" {{if eq .Language "es"}}selected{{end}}>Español</option>
+                            </select>
+                        </div>
+                    </fieldset>
+
+                    <details class="expandable-section" open>
+                        <summary>Requested Information</summary>
+                        <fieldset>
+                            <div class="field-filter-grid">
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb" value="title"
+                                        checked><label>Business Name</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb" value="address"
+                                        checked><label>Address</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb" value="phone"
+                                        checked><label>Phone</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                        value="website"><label>Website</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                        value="category"><label>Category</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                        value="review_count"><label>Review Count</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                        value="review_rating"><label>Rating</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                        value="open_hours"><label>Working Hours</label></div>
+                                <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                        value="emails"><label>Emails</label></div>
+                            </div>
+                            <details style="margin-top:0.5rem">
+                                <summary style="font-size:0.75rem;color:var(--text-muted)">Other Fields</summary>
+                                <div class="field-filter-grid" style="margin-top:0.5rem">
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="link"><label>Map Link</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="plus_code"><label>Plus Code</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="latitude"><label>Latitude</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="longitude"><label>Longitude</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="status"><label>Status</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="descriptions"><label>Description</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="price_range"><label>Price Range</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="popular_times"><label>Popular Times</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="reviews_per_rating"><label>Reviews by Rating</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="complete_address"><label>Full Address</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="about"><label>About</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="owner"><label>Owner</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="reservations"><label>Reservations</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="order_online"><label>Order Online</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="menu"><label>Menu</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="timezone"><label>Timezone</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="thumbnail"><label>Thumbnail</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="images"><label>Images</label></div>
+                                    <div class="form-group checkbox"><input type="checkbox" class="field-cb"
+                                            value="user_reviews"><label>User Reviews</label></div>
+                                </div>
+                            </details>
+                        </fieldset>
+                    </details>
+
+                    <details class="expandable-section">
+                        <summary>Location Settings</summary>
+                        <fieldset>
+                            <div class="form-group">
+
+                                <label for="zoom">Zoom:</label>
+                                <input type="number" id="zoom" name="zoom" value="{{.Zoom}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="latitude">Latitude:</label>
+                                <input type="number" step="0.000000000000001" id="latitude" name="latitude"
+                                    value="{{.Lat}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="longitude">Longitude:</label>
+                                <input type="number" step="0.000000000000001" id="longitude" name="longitude"
+                                    value="{{.Lon}}">
+                            </div>
+                        </fieldset>
+                    </details>
+
+                    <details class="expandable-section">
+                        <summary>Advanced Options</summary>
+                        <fieldset>
+                            <div class="form-group">
+                                <label for="fastmode">Fast Mode (BETA):</label>
+                                <input type="checkbox" id="fastmode" name="fastmode" {{if .FastMode}}checked{{end}}>
+                            </div>
+                            <div class="form-group">
+                                <label for="search_delay">Delay Between Queries (Seconds):</label>
+                                <input type="number" id="search_delay" name="search_delay" value="{{.SearchDelay}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="radius">Radius (Meters):</label>
+                                <input type="number" id="radius" name="radius" value="{{.Radius}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="depth">Depth (Number of Pages):</label>
+                                <input type="number" step="1" id="depth" name="depth" value="{{.Depth}}" min="1" max="6" title="FastMode: How many pages to fetch per query (1 page=20 results, 6 pages=120 results)">
+                            </div>
+                            <div class="form-group checkbox">
+                                <input type="checkbox" id="email" name="email" {{if .Email}}checked{{end}}>
+                                <label for="email">Fetch Emails</label>
+                            </div>
+                            <div class="form-group">
+                                <label for="maxtime">Maximum Duration:</label>
+                                <input type="text" id="maxtime" name="maxtime" value="{{.MaxTime}}">
+                            </div>
+                        </fieldset>
+                    </details>
+                    <details class="expandable-section">
+                        <summary>Proxy Servers</summary>
+                        <fieldset>
+                            <div class="form-group">
+                                <label for="proxies">Proxies: (one per line)</label>
+                                <p class="text-muted"><small>Examples:<br>
+                                        <p>HTTPS with username/password: https://username:password@myproxy.local:443
+                                        <p>
+                                        <p>HTTP with username/password: http://username:password@myproxy.local:443
+                                        <p>
+                                        <p>SOCKS5 without authentication: socks5://127.0.0.1:8000</p>
+                                </p>
+
+                                <textarea id="proxies" name="proxies" rows="5">{{.ProxiesString}}</textarea>
+                            </div>
+                        </fieldset>
+                    </details>
+
+                    <button type="submit">Start Scraping</button>
+                </form>
+            </div>
+            <div class="content">
+                <div id="spinner" class="spinner"></div>
+                <table id="job-table">
+                    <thead>
+                        <tr>
+                            <th>Task #</th>
+                            <th>Record Count</th>
+                            <th>Task Name</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody hx-get="/jobs" hx-trigger="load, every 10s">
+                        <!-- Job rows will be inserted here by HTMX -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function getFieldsQuery() {
+            var cbs = document.querySelectorAll('.field-cb:checked');
+            var fields = [];
+            cbs.forEach(function (cb) { fields.push(cb.value); });
+            return fields.join(',');
+        }
+        function downloadFile(id, format) {
+            var fields = getFieldsQuery();
+            var url = '/download?id=' + id;
+            if (format) url += '&format=' + format;
+            if (fields) url += '&fields=' + fields;
+            window.location.href = url;
+        }
+
+        // ========== SIDEBAR RESIZE ==========
+        (function () {
+            var handle = document.getElementById('resize-handle');
+            var sidebar = document.getElementById('sidebar');
+            var isResizing = false;
+
+            // Restore saved width
+            var savedWidth = localStorage.getItem('sidebar-width');
+            if (savedWidth) sidebar.style.width = savedWidth + 'px';
+
+            handle.addEventListener('mousedown', function (e) {
+                isResizing = true;
+                handle.classList.add('active');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isResizing) return;
+                var newWidth = e.clientX;
+                var min = 300, max = window.innerWidth * 0.7;
+                if (newWidth < min) newWidth = min;
+                if (newWidth > max) newWidth = max;
+                sidebar.style.width = newWidth + 'px';
+            });
+
+            document.addEventListener('mouseup', function () {
+                if (!isResizing) return;
+                isResizing = false;
+                handle.classList.remove('active');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                localStorage.setItem('sidebar-width', sidebar.offsetWidth);
+            });
+        })();
+
+        // ========== DARK MODE TOGGLE ==========
+        function toggleTheme() {
+            var html = document.documentElement;
+            var btn = document.getElementById('theme-toggle');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.removeAttribute('data-theme');
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Set toggle button icon on load
+        (function () {
+            var saved = localStorage.getItem('theme');
+            var btn = document.getElementById('theme-toggle');
+            if (saved === 'dark') btn.textContent = '☀️';
+        })();
+    </script>
+</body>
+
+</html>

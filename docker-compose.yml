@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  scraper:
+    build: .
+    container_name: gmaps-scraper
+    working_dir: /app
+    volumes:
+      # Mount current directory to /app
+      - .:/app
+      # Ensure data folder persists (optional, since /app is mounted)
+      # - ./webdata:/app/webdata
+    ports:
+      - "8080:8080"
+    # Run in Web/Dashboard mode
+    command:
+      - "-web"
+      - "-addr"
+      - ":8080"
+      - "-data-folder"
+      - "/app/webdata"
+      - "-c"
+      - "3"
+    environment:
+      - DATA_FOLDER=/app/webdata
